@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive overview of the Terraform infrastructure architecture for Noise2Signal LLC's AWS Organization. The design separates concerns across **multiple AWS accounts and infrastructure layers within a single repository**, enabling secure multi-tenancy, clear ownership boundaries, and scalable management of wholly-owned and commissioned website infrastructure.
+This document provides a comprehensive overview of the Terraform infrastructure architecture for Noise2Signal LLC's AWS Organization. The design separates concerns across **multiple AWS accounts and infrastructure layers within a single repository**, enabling secure multi-tenancy, clear ownership boundaries, and scalable management of proprietary and commissioned website infrastructure.
 
 **Key Design Principles:**
 - **Account Isolation**: Management and workload accounts with clear separation of concerns
@@ -21,45 +21,60 @@ This document provides a comprehensive overview of the Terraform infrastructure 
 ```
 noise2signal-llc (Organization Root)
 ├── Management OU
-│   └── noise2signal-llc-management (Management Account)
+│   └── noise2signal-llc-primary (Management Account)
 │       • AWS Organizations
 │       • IAM Identity Center (AWS SSO)
 │       • Service Control Policies
 │       • Consolidated billing
 │       • Route53 domain registrations (domains only, NOT zones)
 │
-├── Workloads OU
-│   ├── Production OU
-│   │   └── noise2signal-llc-whollyowned (Production Account)
-│   │       • Route53 hosted zones
-│   │       • ACM certificates
-│   │       • S3, CloudFront (website infrastructure)
-│   │       • IAM roles + OIDC
-│   │
-│   └── Development OU (future: staging accounts)
+├── Proprietary OU
+│   ├── proprietary-signal (Workloads Account)
+│   |   • Route53 hosted zones
+│   |   • ACM certificates
+│   |   • S3, CloudFront (website infrastructure)
+│   |   • IAM roles + OIDC
+│   └── proprietary-noise (future: non-production workloads)
 │
-├── Clients OU (future: commissioned work accounts)
-│   ├── noise2signal-llc-client-acme (future)
-│   └── noise2signal-llc-client-beta (future)
-│
-└── Sandbox OU (future: experimentation, non-production testing)
+└── Clients OU (future: commissioned workloads accounts)
+    ├── Rosen Association OU (future)
+    |   ├── rosen-association-noise (future: client development workloads)
+    |   └── rosen-association-signal (future: client production workloads)
+    └── P.P. Layouts OU (future)
+        ├── pp-layouts-noise (future: client development workloads)
+        └── pp-layouts-signal (future: client production workloads)
 ```
 
-**Account Responsibilities**:
+**Organization Unit and Account Scopes**:
 
-| Account | Purpose | Key Resources | State Backend |
-|---------|---------|---------------|---------------|
-| **Management** | Organization governance, SSO, billing | AWS Org, SCPs, IAM Identity Center, domain registrations | S3 in management account |
-| **Whollyowned** | N2S brand websites (production) | Route53 zones, ACM, S3, CloudFront | S3 in whollyowned account |
-| **Client accounts** (future) | Commissioned work (separate billing) | Same as whollyowned | S3 in each client account |
+Management OU (noise2signal-llc-primary): 
+- Organization governance
+  - AWS Organizations
+  - Billing & Costs Explorer
+  - SCPs
+  - IAM Identity Center & SSO resources
+  - Route53 domain registrations
+  - S3 for tfstate backend
+
+Proprietary OU ({not yet provisioned}):
+- Noise2Signal LLC proprietary workloads
+  - Static Websites
+    - Route53 zones
+    - ACM
+    - S3 for site objects
+    - CloudFront
+    - S3 for tfstate backend
+
+Clients OU ({future state: not yet provisioned}):
+- Client Workloads
 
 ---
 
 ## Repository Architecture
 
-### Single Repository, Multi-Account Structure
+### Repository Per OU Structure
 
-All infrastructure is managed in a **single Git repository** (`iac-aws`) with account-specific directories:
+All infrastructure is currently in a **single Git repository** (`iac-aws`) with account-specific directories:
 
 ```
 iac-aws/
@@ -74,10 +89,10 @@ iac-aws/
 │   ├── scp/                        # Layer 2: Service Control Policies
 │   └── tfstate-backend/            # Layer 3: State backend (management)
 │
-├── whollyowned/                    # Whollyowned Account
+├── proprietary/                    # proprietary Account
 │   ├── CLAUDE.md                   # Account overview
 │   ├── rbac/                       # Layer 0: IAM roles + OIDC
-│   ├── tfstate-backend/            # Layer 1: State backend (whollyowned)
+│   ├── tfstate-backend/            # Layer 1: State backend (proprietary)
 │   ├── domains/                    # Layer 2: Route53 zones + ACM
 │   └── sites/                      # Layer 3: S3 + CloudFront + DNS
 │
@@ -106,10 +121,10 @@ iac-aws/
 │  ─────────────────────────────────────────────────────────  │
 │  • Enable AWS Organizations                                 │
 │  • Create OU structure (Management, Workloads, Clients)     │
-│  • Create whollyowned account                               │
+│  • Create proprietary account                               │
 │  • Configure consolidated billing                           │
 │                                                             │
-│  Auth: Root user / admin credentials, Local state          │
+│  Auth: Root user / admin credentials, Local state           │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -149,17 +164,17 @@ iac-aws/
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Phase 2: Whollyowned Account Bootstrap
+### Phase 2: proprietary Account Bootstrap
 
 **Prerequisites**:
-- Phase 1 complete (whollyowned account created)
-- Access to whollyowned account (via SSO or assume-role from management)
+- Phase 1 complete (proprietary account created)
+- Access to proprietary account (via SSO or assume-role from management)
 
 **Deployment Order**:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  whollyowned/rbac/                                          │
+│  proprietary/rbac/                                          │
 │  Layer 0: IAM Roles + OIDC Provider                         │
 │  ─────────────────────────────────────────────────────────  │
 │  • GitHub OIDC provider                                     │
@@ -171,18 +186,18 @@ iac-aws/
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  whollyowned/tfstate-backend/                               │
+│  proprietary/tfstate-backend/                               │
 │  Layer 1: Terraform State Backend (optional, last)          │
 │  ─────────────────────────────────────────────────────────  │
-│  • S3 bucket for whollyowned account state                  │
+│  • S3 bucket for proprietary account state                  │
 │  • DynamoDB table for state locking                         │
-│  • Migrate whollyowned layers to remote state               │
+│  • Migrate proprietary layers to remote state               │
 │                                                             │
 │  Auth: Assumes tfstate-terraform-role, Local → Remote      │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  whollyowned/domains/                                       │
+│  proprietary/domains/                                       │
 │  Layer 2: Route53 Zones + ACM Certificates                  │
 │  ─────────────────────────────────────────────────────────  │
 │  • Route53 hosted zones (public DNS)                        │
@@ -194,7 +209,7 @@ iac-aws/
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  whollyowned/sites/                                         │
+│  proprietary/sites/                                         │
 │  Layer 3: Website Infrastructure                            │
 │  ─────────────────────────────────────────────────────────  │
 │  • S3 buckets (primary + www redirect)                      │
@@ -208,10 +223,10 @@ iac-aws/
 
 ### Phase 3: Cross-Account Wiring
 
-**Manual Step**: Update domain registrations in management account with NS records from whollyowned account
+**Manual Step**: Update domain registrations in management account with NS records from proprietary account
 
 ```bash
-# In whollyowned account: Get NS records from hosted zone
+# In proprietary account: Get NS records from hosted zone
 aws route53 list-resource-record-sets \
   --hosted-zone-id Z1234567890ABC \
   --query "ResourceRecordSets[?Type=='NS'].ResourceRecords[*].Value"
@@ -243,10 +258,10 @@ s3://n2s-terraform-state-management/
     └── tfstate-backend.tfstate (after migration)
 ```
 
-**Whollyowned Account**:
+**proprietary Account**:
 ```
-s3://n2s-terraform-state-whollyowned/
-└── whollyowned/
+s3://n2s-terraform-state-proprietary/
+└── proprietary/
     ├── rbac.tfstate
     ├── tfstate-backend.tfstate (after migration)
     ├── domains.tfstate
@@ -283,12 +298,12 @@ s3://n2s-terraform-state-client-acme/
 
 ### Route53 Domain Registration → Hosted Zone
 
-**Challenge**: Domain registrations live in management account, hosted zones in whollyowned account
+**Challenge**: Domain registrations live in management account, hosted zones in proprietary account
 
 **Resolution Pattern**:
 
 ```hcl
-# In whollyowned/domains layer: Create hosted zone
+# In proprietary/domains layer: Create hosted zone
 resource "aws_route53_zone" "site" {
   name = "camdenwander.com"
   tags = local.common_tags
@@ -311,10 +326,10 @@ output "nameservers" {
 
 **Challenge**: ACM certificates and CloudFront distributions must be in same account
 
-**Resolution**: Both live in whollyowned account (no cross-account dependency)
+**Resolution**: Both live in proprietary account (no cross-account dependency)
 
 ```hcl
-# In whollyowned/sites layer: Discover ACM certificate
+# In proprietary/sites layer: Discover ACM certificate
 data "aws_acm_certificate" "site" {
   provider    = aws.us_east_1
   domain      = var.domain_name
@@ -372,7 +387,7 @@ resource "aws_cloudfront_distribution" "site" {
 - Terraform roles: Not needed initially (use SSO admin)
 - Future: Terraform execution roles for GitHub Actions
 
-**Whollyowned Account**:
+**proprietary Account**:
 - `rbac-terraform-role`: Bootstrap role (creates other roles)
 - `tfstate-terraform-role`: State backend management
 - `domains-terraform-role`: Route53 + ACM management
@@ -387,7 +402,7 @@ resource "aws_cloudfront_distribution" "site" {
 Each account has its own GitHub OIDC provider and IAM roles:
 
 ```hcl
-# In whollyowned/rbac layer
+# In proprietary/rbac layer
 resource "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
@@ -445,8 +460,8 @@ All resources tagged with:
 ```hcl
 tags = {
   Organization = "noise2signal-llc"
-  Account      = "whollyowned"  # or "management", "client-acme"
-  CostCenter   = "whollyowned"  # or "infrastructure", "client-acme"
+  Account      = "proprietary"  # or "management", "client-acme"
+  CostCenter   = "proprietary"  # or "infrastructure", "client-acme"
   Environment  = "production"   # or "development", "staging"
   ManagedBy    = "terraform"
   Layer        = "domains"      # or "sites", "scp", etc.
@@ -455,7 +470,7 @@ tags = {
 
 **Cost Centers**:
 - `infrastructure`: Management account resources (org, SSO, SCPs)
-- `whollyowned`: N2S brand websites
+- `proprietary`: N2S brand websites
 - `client-{name}`: Client commissioned work (future)
 
 ### Cost Monitoring
@@ -484,7 +499,7 @@ DynamoDB state locking:      ~$0.25
 Total:                       ~$1.35/month (1 domain)
 ```
 
-**Whollyowned Account** (~$2-6/month per site):
+**proprietary Account** (~$2-6/month per site):
 ```
 S3 state backend:            ~$0.10
 DynamoDB state locking:      ~$0.25
@@ -504,11 +519,11 @@ Total per site:              ~$1.87-5.87/month
 
 ### Account-Level Separation
 
-**Wholly-Owned Work** (N2S IP):
-- Account: `noise2signal-llc-whollyowned`
+**proprietary Work** (N2S IP):
+- Account: `noise2signal-llc-proprietary`
 - OU: `Workloads/Production`
-- Billing: `whollyowned` cost center
-- Repository: `iac-aws` (this repo, `/whollyowned/` directory)
+- Billing: `proprietary` cost center
+- Repository: `iac-aws` (this repo, `/proprietary/` directory)
 
 **Commissioned Work** (Client IP, future):
 - Account: `noise2signal-llc-client-{name}` (separate account per client)
@@ -526,7 +541,7 @@ Total per site:              ~$1.87-5.87/month
 
 **Option A** (Recommended): Separate repository per client
 ```
-iac-aws/                    # N2S internal (management + whollyowned)
+iac-aws/                    # N2S internal (management + proprietary)
 iac-aws-client-acme/        # Client ACME (forked template)
 iac-aws-client-beta/        # Client Beta (forked template)
 ```
@@ -535,7 +550,7 @@ iac-aws-client-beta/        # Client Beta (forked template)
 ```
 iac-aws/
 ├── management/
-├── whollyowned/
+├── proprietary/
 └── clients/
     ├── acme/               # Client ACME layers
     └── beta/               # Client Beta layers
@@ -563,7 +578,7 @@ aws configure --profile management-admin
 cd management/organization
 terraform init
 terraform apply
-# Note: whollyowned account ID from outputs
+# Note: proprietary account ID from outputs
 
 # Deploy SSO layer
 cd ../sso
@@ -586,14 +601,14 @@ terraform apply
 # Migrate management layers to remote state
 ```
 
-**Phase 2: Whollyowned Account**
+**Phase 2: proprietary Account**
 
 ```bash
-# Configure AWS CLI with whollyowned account access (via SSO)
-aws sso login --profile whollyowned-admin
+# Configure AWS CLI with proprietary account access (via SSO)
+aws sso login --profile proprietary-admin
 
 # Deploy RBAC layer
-cd whollyowned/rbac
+cd proprietary/rbac
 terraform init
 terraform apply
 # Note: IAM role ARNs from outputs
@@ -602,7 +617,7 @@ terraform apply
 cd ../tfstate-backend
 terraform init
 terraform apply
-# Migrate whollyowned layers to remote state
+# Migrate proprietary layers to remote state
 
 # Deploy domains layer
 cd ../domains
@@ -624,8 +639,8 @@ aws cloudfront create-invalidation --distribution-id <ID> --paths "/*"
 **Phase 3: Cross-Account Wiring**
 
 ```bash
-# Get NS records from whollyowned hosted zone
-aws route53 list-hosted-zones --profile whollyowned-admin
+# Get NS records from proprietary hosted zone
+aws route53 list-hosted-zones --profile proprietary-admin
 aws route53 list-resource-record-sets \
   --hosted-zone-id Z1234567890ABC \
   --query "ResourceRecordSets[?Type=='NS'].ResourceRecords[*].Value"
@@ -673,13 +688,13 @@ jobs:
 ```
 
 ```yaml
-# .github/workflows/whollyowned-sites.yml
-name: Whollyowned - Sites Layer
+# .github/workflows/proprietary-sites.yml
+name: proprietary - Sites Layer
 
 on:
   push:
     branches: [main]
-    paths: ['whollyowned/sites/**']
+    paths: ['proprietary/sites/**']
 
 jobs:
   terraform:
@@ -692,13 +707,13 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::WHOLLYOWNED_ACCOUNT_ID:role/sites-terraform-role
+          role-to-assume: arn:aws:iam::proprietary_ACCOUNT_ID:role/sites-terraform-role
           aws-region: us-east-1
       - name: Terraform Init
-        working-directory: ./whollyowned/sites
+        working-directory: ./proprietary/sites
         run: terraform init
       - name: Terraform Apply
-        working-directory: ./whollyowned/sites
+        working-directory: ./proprietary/sites
         run: terraform apply -auto-approve
 ```
 
@@ -710,7 +725,7 @@ jobs:
 - [x] Design multi-account architecture
 - [ ] Create Terraform configurations for all layers
 - [ ] Deploy management account (organization, SSO, SCPs)
-- [ ] Deploy whollyowned account (domains, sites)
+- [ ] Deploy proprietary account (domains, sites)
 - [ ] Implement GitHub Actions CI/CD
 - [ ] Set up billing alarms per account
 
@@ -734,7 +749,7 @@ jobs:
 
 ### Common Issues
 
-**Issue**: Cannot access whollyowned account
+**Issue**: Cannot access proprietary account
 - **Cause**: SSO not configured, permission set not assigned
 - **Resolution**: Check IAM Identity Center, assign AdministratorAccess to boss user
 
@@ -756,7 +771,7 @@ jobs:
 
 **Issue**: Role assumption failure (GitHub Actions)
 - **Cause**: OIDC provider not created, trust policy misconfigured
-- **Resolution**: Check whollyowned/rbac layer deployment, verify trust policy
+- **Resolution**: Check proprietary/rbac layer deployment, verify trust policy
 
 ---
 
@@ -767,10 +782,10 @@ jobs:
 - [management/organization/CLAUDE.md](./management/organization/CLAUDE.md) - Organization layer
 - [management/sso/CLAUDE.md](./management/sso/CLAUDE.md) - IAM Identity Center layer
 - [management/scp/CLAUDE.md](./management/scp/CLAUDE.md) - SCP layer
-- [whollyowned/CLAUDE.md](./whollyowned/CLAUDE.md) - Whollyowned account overview
-- [whollyowned/rbac/CLAUDE.md](./whollyowned/rbac/CLAUDE.md) - RBAC layer
-- [whollyowned/domains/CLAUDE.md](./whollyowned/domains/CLAUDE.md) - Domains layer
-- [whollyowned/sites/CLAUDE.md](./whollyowned/sites/CLAUDE.md) - Sites layer
+- [proprietary/CLAUDE.md](./proprietary/CLAUDE.md) - proprietary account overview
+- [proprietary/rbac/CLAUDE.md](./proprietary/rbac/CLAUDE.md) - RBAC layer
+- [proprietary/domains/CLAUDE.md](./proprietary/domains/CLAUDE.md) - Domains layer
+- [proprietary/sites/CLAUDE.md](./proprietary/sites/CLAUDE.md) - Sites layer
 - [modules/domain/CLAUDE.md](./modules/domain/CLAUDE.md) - Domain module
 - [modules/static-site/CLAUDE.md](./modules/static-site/CLAUDE.md) - Static site module
 
