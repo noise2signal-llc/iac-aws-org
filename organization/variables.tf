@@ -22,6 +22,5 @@ variable "common_tags" {
   default = {
     Organization = "Noise2Signal LLC"
     ManagedBy    = "terraform"
-    Layer        = "organization"
   }
 }
