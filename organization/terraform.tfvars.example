@@ -1,0 +1,8 @@
+# Example Terraform Variables
+# Copy this file to terraform.tfvars and update with your values
+# NEVER commit terraform.tfvars to Git
+
+# Email address for Proprietary Signals account root user
+# Must be globally unique across all AWS accounts
+# Suggestion: use email aliases like aws+proprietary-signals@noise2signal.com
+proprietary_signals_email = "aws+proprietary-signals@noise2signal.com"
