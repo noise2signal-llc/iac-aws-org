@@ -33,8 +33,6 @@ resource "aws_identitystore_group_membership" "admiral_to_admirals" {
   member_id         = data.aws_identitystore_user.admiral.user_id
 }
 
-# Permission Set: AdmiralAccess
-# Status: Exists in AWS, needs import
 resource "aws_ssoadmin_permission_set" "admiral_access" {
   name             = "AdmiralAccess"
   instance_arn     = local.sso_instance_arn
@@ -48,8 +46,6 @@ resource "aws_ssoadmin_permission_set" "admiral_access" {
   )
 }
 
-# Attach AdministratorAccess policy to AdmiralAccess permission set
-# Status: Exists in AWS, needs import
 resource "aws_ssoadmin_managed_policy_attachment" "admiral_access_admin_policy" {
   instance_arn       = local.sso_instance_arn
   permission_set_arn = aws_ssoadmin_permission_set.admiral_access.arn
@@ -59,8 +55,6 @@ resource "aws_ssoadmin_managed_policy_attachment" "admiral_access_admin_policy" 
 # Reference organization to get management account ID
 data "aws_organizations_organization" "noise2signal_llc" {}
 
-# Assign AdmiralsSSO group to management account with AdmiralAccess permission set
-# Status: Exists in AWS, needs import
 resource "aws_ssoadmin_account_assignment" "admirals_to_management" {
   instance_arn       = local.sso_instance_arn
   permission_set_arn = aws_ssoadmin_permission_set.admiral_access.arn
