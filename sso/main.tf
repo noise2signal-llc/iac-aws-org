@@ -16,6 +16,23 @@ data "aws_identitystore_user" "admiral" {
   }
 }
 
+resource "aws_identitystore_user" "admiral" {
+
+  identity_store_id = local.identity_store_id
+
+  display_name = "Admr Camden Lindahl"
+  user_name = "Admiral-SSO-Noise2Signal-LLC"
+
+  name {
+    family_name = "Lindahl"
+    given_name = "Camden"
+  }
+
+  emails {
+    value = "camden.lindahl+admiral-noise2signal-llc@gmail.com"
+  }
+}
+
 data "aws_identitystore_group" "admirals" {
   identity_store_id = local.identity_store_id
 
