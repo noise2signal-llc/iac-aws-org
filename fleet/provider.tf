@@ -15,9 +15,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Organization = "Noise2Signal LLC"
       ManagedBy    = "terraform"
-      Layer        = "sso"
     }
   }
 }

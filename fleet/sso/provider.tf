@@ -15,8 +15,6 @@ provider "aws" {
 
   default_tags {
     tags = {
-      CostCenter   = "Noise2Signal LLC"
-      Purpose      = "Governance"
       ManagedBy    = "terraform"
     }
   }
