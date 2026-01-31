@@ -10,23 +10,23 @@ resource "aws_identitystore_user" "admiral" {
   identity_store_id = local.identity_store_id
 
   display_name = "Admr Camden Lindahl"
-  user_name = "Admiral-SSO-Noise2Signal-LLC"
+  user_name    = "Admiral-SSO-Noise2Signal-LLC"
 
   name {
     family_name = "Lindahl"
-    given_name = "Admr Camden"
+    given_name  = "Admr Camden"
   }
 
   emails {
     primary = true
-    type = "work"
-    value = var.sso_admiral_email
+    type    = "work"
+    value   = var.sso_admiral_email
   }
 }
 
 resource "aws_identitystore_group" "rearadmiral" {
   identity_store_id = local.identity_store_id
-  display_name = "RearAdmiral"
+  display_name      = "RearAdmiral"
 }
 
 resource "aws_identitystore_group_membership" "rearadmiral_orig" {

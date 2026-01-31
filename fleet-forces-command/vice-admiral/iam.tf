@@ -9,8 +9,8 @@ resource "aws_iam_group_policy_attachment" "admirals_admin" {
 }
 
 resource "aws_iam_user" "admiral" {
-  name = "admiral-noise2signal-llc"
-  path = "/"
+  name          = "admiral-noise2signal-llc"
+  path          = "/"
   force_destroy = true
 
   tags = {
@@ -19,7 +19,7 @@ resource "aws_iam_user" "admiral" {
 }
 
 resource "aws_iam_user_policy_attachment" "admiral_import" {
-  user = aws_iam_user.admiral.name
+  user       = aws_iam_user.admiral.name
   policy_arn = data.aws_iam_policy.change_password.arn
 }
 
@@ -48,8 +48,8 @@ resource "aws_iam_group_policy_attachment" "viceadmiral" {
 
 
 resource "aws_iam_user" "viceadmiral" {
-  name = "viceadmiral-noise2signal-llc"
-  path = "/"
+  name          = "viceadmiral-noise2signal-llc"
+  path          = "/"
   force_destroy = true
 
   tags = {
@@ -62,7 +62,7 @@ data "aws_iam_policy" "change_password" {
 }
 
 resource "aws_iam_user_policy_attachment" "viceadmiral" {
-  user = aws_iam_user.viceadmiral.name
+  user       = aws_iam_user.viceadmiral.name
   policy_arn = data.aws_iam_policy.change_password.arn
 }
 
