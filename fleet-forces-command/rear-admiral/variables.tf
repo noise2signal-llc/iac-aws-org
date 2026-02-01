@@ -17,3 +17,8 @@ variable "rear_admiral_email" {
     error_message = "Must be a valid email address."
   }
 }
+
+# List of AWS accounts the Rear Admiral has Administrative access to
+variable "rear_admiral_commands" {
+  type = map(any)
+}
