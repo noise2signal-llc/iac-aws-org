@@ -11,35 +11,35 @@ resource "aws_organizations_organization" "noise2signal_llc" {
   feature_set = "ALL"
 }
 
-resource "aws_organizations_organizational_unit" "domestic_base" {
-  name      = "Noise2Signal LLC Management"
+resource "aws_organizations_organizational_unit" "base" {
+  name      = "Base"
   parent_id = aws_organizations_organization.noise2signal_llc.roots[0].id
 
   tags = {
-    Purpose = "Governance"
+    Purpose = "ShoreEstablishment"
   }
 }
 
 resource "aws_organizations_organizational_unit" "domestic_fleet" {
-  name      = "Proprietary Workloads"
+  name      = "Domestic Fleet"
   parent_id = aws_organizations_organization.noise2signal_llc.roots[0].id
 
   tags = {
-    Purpose = "Governance"
+    Purpose = "OperatingForces"
   }
 }
 
-module "bases" {
+module "base" {
   source     = "./base"
   base_email = var.base_email
-  base_ou_id = aws_organizations_organizational_unit.domestic_base.id
+  base_ou_id = aws_organizations_organizational_unit.base.id
 }
 
 module "fleets" {
-  source = "./fleets"
+  source                      = "./fleets"
   domestic_signal_fleet_email = var.domestic_signal_fleet_email
-  domestic_noise_fleet_email = var.domestic_noise_fleet_email
-  domestic_fleet_ou_id = aws_organizations_organizational_unit.domestic_fleet.id
+  domestic_noise_fleet_email  = var.domestic_noise_fleet_email
+  domestic_fleet_ou_id        = aws_organizations_organizational_unit.domestic_fleet.id
 }
 
 module "vice_admiral" {
@@ -49,8 +49,9 @@ module "vice_admiral" {
 module "rear_admiral" {
   source            = "./rear-admiral"
   sso_admiral_email = var.sso_admiral_email
+  rear_admiral_email = var.rear_admiral_email
 }
 
-module "stations" {
-  source = "./stations"
+module "pennants" {
+  source = "./pennants"
 }
