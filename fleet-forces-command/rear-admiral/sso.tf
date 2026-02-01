@@ -74,7 +74,7 @@ resource "aws_identitystore_user" "rear_admiral" {
 
   identity_store_id = local.identity_store_id
 
-  user_name    = "RearAdmiral-Noise2Signal-LLC"
+  user_name    = "Rear-Admiral-Noise2Signal-LLC"
   display_name = "Rear Admiral"
 
   name {
@@ -87,6 +87,12 @@ resource "aws_identitystore_user" "rear_admiral" {
     type    = "work"
     value   = var.rear_admiral_email
   }
+}
+
+resource "aws_identitystore_group_membership" "rear_admiral" {
+  identity_store_id = local.identity_store_id
+  group_id          = aws_identitystore_group.rear_admiral.group_id
+  member_id         = aws_identitystore_user.rear_admiral.user_id
 }
 
 resource "aws_ssoadmin_permission_set" "rear_admiral" {
