@@ -36,19 +36,19 @@ resource "aws_iam_user_group_membership" "admiral_membership" {
 ####  vvv KEEP
 
 
-resource "aws_iam_group" "viceadmiral" {
-  name = "ViceAdmirals-Noise2Signal-LLC"
+resource "aws_iam_group" "vice_admiral" {
+  name = "Vice-Admirals-Noise2Signal-LLC"
   path = "/"
 }
 
-resource "aws_iam_group_policy_attachment" "viceadmiral" {
-  group      = aws_iam_group.viceadmiral.name
+resource "aws_iam_group_policy_attachment" "administrator" {
+  group      = aws_iam_group.vice_admiral.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
 
-resource "aws_iam_user" "viceadmiral" {
-  name          = "viceadmiral-noise2signal-llc"
+resource "aws_iam_user" "vice_admiral" {
+  name          = "Vice-Admiral-Noise2Signal-LLC"
   path          = "/"
   force_destroy = true
 
@@ -61,15 +61,15 @@ data "aws_iam_policy" "change_password" {
   name = "IAMUserChangePassword"
 }
 
-resource "aws_iam_user_policy_attachment" "viceadmiral" {
-  user       = aws_iam_user.viceadmiral.name
+resource "aws_iam_user_policy_attachment" "change_password" {
+  user       = aws_iam_user.vice_admiral.name
   policy_arn = data.aws_iam_policy.change_password.arn
 }
 
-resource "aws_iam_user_group_membership" "viceadmiral" {
-  user = aws_iam_user.viceadmiral.name
+resource "aws_iam_user_group_membership" "vice_admiral" {
+  user = aws_iam_user.vice_admiral.name
 
   groups = [
-    aws_iam_group.viceadmiral.name,
+    aws_iam_group.vice_admiral.name,
   ]
 }
