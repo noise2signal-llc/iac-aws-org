@@ -11,7 +11,7 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-  profile = "admiral"
+  profile = "rear-admiral"
 
   default_tags {
     tags = {

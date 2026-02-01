@@ -50,6 +50,7 @@ module "rear_admiral" {
   source            = "./rear-admiral"
   sso_admiral_email = var.sso_admiral_email
   rear_admiral_email = var.rear_admiral_email
+  rear_admiral_commands = zipmap(concat([module.base.base_id], module.fleets.domestic_fleet_ids), concat([module.base.base_id], module.fleets.domestic_fleet_ids))
 }
 
 module "pennants" {

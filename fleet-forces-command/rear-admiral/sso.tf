@@ -107,13 +107,16 @@ resource "aws_ssoadmin_managed_policy_attachment" "rear_admiral" {
   managed_policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
-resource "aws_ssoadmin_account_assignment" "base" {
+resource "aws_ssoadmin_account_assignment" "commands" {
+  for_each = var.rear_admiral_commands
+
   instance_arn       = local.sso_instance_arn
   permission_set_arn = aws_ssoadmin_permission_set.rear_admiral.arn
 
   principal_id   = aws_identitystore_group.rear_admiral.group_id
   principal_type = "GROUP"
 
-  target_id   = data.aws_organizations_organization.noise2signal_llc.master_account_id
+  # target_id   = data.aws_organizations_organization.noise2signal_llc.master_account_id
+  target_id   = each.value
   target_type = "AWS_ACCOUNT"
 }
